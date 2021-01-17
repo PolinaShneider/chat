@@ -19,6 +19,8 @@ const senders = [
     }
 ];
 
+
+
 class Chat {
     constructor(settings) {
         this.chat = document.getElementById(Chat.IDs.chatId);
@@ -30,6 +32,8 @@ class Chat {
         this.addListeners();
     }
 
+
+
     init(settings) {
         // Вызывать конструктор дочернего класса — не очень хорошая идея
         // Поэтому напишем вспомогательный метод повторной инициализации
@@ -37,9 +41,9 @@ class Chat {
         this.id = settings.id;
 
         // Рендерим старые сообщения
-        this.messagesQueue.forEach((item) => {
+        this.messagesQueue.forEach((item, index) => {
             if (item.id === "me") {
-                this.createAndSendMessage({text: item.message, status: 'my', id: 'me', logo: ''});
+                this.createAndSendMessage({ text: item.message, status: 'my', id: 'me', logo: '', index });
             } else {
                 // Найдем аватарку по id отправителя
                 const data = senders.find((it) => it.id === item.id);
@@ -47,7 +51,8 @@ class Chat {
                     text: item.message,
                     status: 'friend',
                     id: item.id,
-                    logo: data.icon
+                    logo: data.icon,
+                    index
                 });
             }
         })
@@ -55,13 +60,13 @@ class Chat {
 
     // Лучше сделать статический геттер
     static get IDs() {
-    	return {
-			chatId: 'chat',
-			messageButtonId: 'messageButton',
-			messageInputId: 'messageInput',
-			groupsId: 'groups'
-		}
-	}
+        return {
+            chatId: 'chat',
+            messageButtonId: 'messageButton',
+            messageInputId: 'messageInput',
+            groupsId: 'groups'
+        }
+    }
 
     destroy() {
         this.chat.innerHTML = '';
@@ -82,7 +87,7 @@ class Chat {
 
     sendFriendMessage() {
         const message = phrases[Helpers.genRandom(phrases.length)];
-        const {id, icon} = senders[Helpers.genRandom(senders.length)];
+        const { id, icon } = senders[Helpers.genRandom(senders.length)];
         this.createAndSendMessage({
             text: message,
             status: 'friend',
@@ -101,7 +106,7 @@ class Chat {
             return;
         }
 
-        this.createAndSendMessage({text, status: 'my', id: 'me', logo: ''});
+        this.createAndSendMessage({ text, status: 'my', id: 'me', logo: '' });
         this.messagesQueue.push({
             id: 'me',
             message: text,
@@ -119,11 +124,8 @@ class Chat {
     }
 
     createAndSendMessage(obj) {
-        if (this.chat) {
-            this.chat.append(this.createMessage(obj));
-        } else {
-            console.warn('Нету переменной chat');
-        }
+
+        this.chat.append(this.createMessage(obj));
     }
 
     createSenderInfo(surName, logo) {
@@ -142,13 +144,14 @@ class Chat {
         return container;
     }
 
-    createMessage({text, status, id, logo}) {
+    createMessage({ text, status, id, logo, index }) {
         const container = Helpers.createElement('div', 'message-holder');
         const senderInfo = this.createSenderInfo(id, logo);
 
         const elem = Helpers.createElement('div', [`message--${status}`, 'message']);
         elem.innerText = text;
-        const shouldShowName = status === 'friend' && this.messagesQueue[this.messagesQueue.length - 1]?.id !== id;
+        let messageIndex = index !== undefined ? index : this.messagesQueue.length;
+        const shouldShowName = status === 'friend' && (this.messagesQueue[messageIndex - 1].id !== id);
         if (shouldShowName) {
             container.prepend(senderInfo);
         }
