@@ -85,16 +85,19 @@ class Chat {
         })
     }
 
-    sendFriendMessage() {
+    sendFriendMessage(queue, chatId) {
         const message = phrases[Helpers.genRandom(phrases.length)];
         const { id, icon } = senders[Helpers.genRandom(senders.length)];
-        this.createAndSendMessage({
-            text: message,
-            status: 'friend',
-            id,
-            logo: icon
-        });
-        this.messagesQueue.push({
+
+        if (chatId === this.id) {
+            this.createAndSendMessage({
+                text: message,
+                status: 'friend',
+                id,
+                logo: icon
+            });
+        }
+        queue.push({
             id,
             message,
         })
@@ -114,12 +117,9 @@ class Chat {
 
 
         const timeout = Helpers.genRandomInRange(1000, 5000);
-        setTimeout(() => {
-            this.sendFriendMessage();
-        }, timeout);
-        setTimeout(() => {
-            this.sendFriendMessage();
-        }, Helpers.genRandomInRange(timeout + 1000, timeout + 3000));
+        const sendDelayed = this.sendFriendMessage.bind(this);
+        setTimeout(sendDelayed, timeout, this.messagesQueue, this.id);
+        setTimeout(sendDelayed, Helpers.genRandomInRange(timeout + 1000, timeout + 3000), this.messagesQueue, this.id);
         this.messageInput.value = "";
     }
 
@@ -151,7 +151,7 @@ class Chat {
         const elem = Helpers.createElement('div', [`message--${status}`, 'message']);
         elem.innerText = text;
         let messageIndex = index !== undefined ? index : this.messagesQueue.length;
-        const shouldShowName = status === 'friend' && (this.messagesQueue[messageIndex - 1].id !== id);
+        const shouldShowName = status === 'friend' && (this.messagesQueue[messageIndex - 1]?.id !== id);
         if (shouldShowName) {
             container.prepend(senderInfo);
         }
